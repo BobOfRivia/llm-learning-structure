@@ -297,7 +297,7 @@ agent 可能学到**绕过 hidden test** 的捷径。SWE-bench 早期就有：�
 
 ## 九、与其他章节联动
 
-- **§11.4 RLVR**：agent benchmark 提供天然 reward（任务完成 / 工具调用正确）；但 reward 周期长（5–30 分钟一题）→ 难直接做 RL 训练
+- **§11.5 RLVR**：agent benchmark 提供天然 reward（任务完成 / 工具调用正确）；但 reward 周期长（5–30 分钟一题）→ 难直接做 RL 训练
 - **§12.6 TTS**：agent 天然是 test-time scaling 场景（多步推理 + tool use）
 - **§13.3**：SWE-bench Verified 是 code agent 评测，同时归 §13.3 和 §13.5
 

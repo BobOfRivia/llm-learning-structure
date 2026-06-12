@@ -1,8 +1,8 @@
-# 4.6 RDMA 与 GPUDirect（补充：Disaggregated Serving 的网络基石）
+# 4.5 RDMA 与 GPUDirect（补充：Disaggregated Serving 的网络基石）
 
-[← 返回框架](../../README.md) · 关联章节：[§4.3 Prefill vs Decode](./03-prefill-vs-decode.md) §6.2
+[← 返回框架](../../README.md) · 关联章节：[§4.3 Prefill vs Decode](./03-prefill-vs-decode.md) · §12.4 分离式推理
 
-> 本节是对 §4.3 §6.2 "Disaggregated Serving" 中一笔带过的 **"通过 KV-cache 迁移（RDMA）"** 的展开。要看懂 DistServe / Splitwise / Mooncake 这一类系统在工程上为什么能成立，必须先理解 RDMA 与 GPUDirect 解决的具体问题。
+> 本节是对 §4.3 / §12.4 "Disaggregated Serving" 中一笔带过的 **"通过 KV-cache 迁移（RDMA）"** 的展开。要看懂 DistServe / Splitwise / Mooncake 这一类系统在工程上为什么能成立，必须先理解 RDMA 与 GPUDirect 解决的具体问题。
 
 ---
 

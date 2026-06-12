@@ -122,7 +122,7 @@ step 2: prefill chunk 2 (256 tok) + decode batch
 **物理上把 prefill 和 decode 分到不同 GPU/节点**：
 - Prefill 节点：compute-heavy GPU（H100, B200）
 - Decode 节点：memory-heavy GPU（H200, MI300X 带宽更高）
-- 之间通过 KV-cache 迁移（RDMA + GPUDirect，详见 [§4.6 RDMA 与 GPUDirect](./06-rdma与gpudirect.md)）
+- 之间通过 KV-cache 迁移（RDMA + GPUDirect，详见 [§4.5 RDMA 与 GPUDirect](./05-rdma与gpudirect.md)）
 
 代表系统：
 - **DistServe** ([Zhong et al. 2024](https://arxiv.org/abs/2401.09670))

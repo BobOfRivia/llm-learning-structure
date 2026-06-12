@@ -204,7 +204,7 @@
 **关键问答：**
 -
 
-### 4.5 显存四块（参数/梯度/优化器/激活）
+### 4.5 RDMA 与 GPUDirect（Disaggregated Serving 网络基石）
 **参考资料：**
 -
 
@@ -416,7 +416,7 @@
 
 ---
 
-## §10 预训练 + 并行化 + PEFT
+## §10 预训练 + 并行化
 
 ### 10.1 预训练流程
 **参考资料：**
@@ -438,7 +438,7 @@
 **关键问答：**
 -
 
-### 10.3 并行化（DP / TP / PP / SP / EP / CP / ZeRO / FSDP）
+### 10.3 显存四块（参数/梯度/优化器/激活）
 **参考资料：**
 -
 
@@ -448,7 +448,7 @@
 **关键问答：**
 -
 
-### 10.4 PEFT（LoRA / QLoRA / DoRA / AdaLoRA）
+### 10.4 并行化（DP / TP / PP / SP / EP / CP / ZeRO / FSDP）
 **参考资料：**
 -
 
@@ -482,7 +482,7 @@
 **关键问答：**
 -
 
-### 11.2 RLHF（RM + PPO）
+### 11.2 PEFT（LoRA / QLoRA / DoRA / AdaLoRA）
 **参考资料：**
 -
 
@@ -492,7 +492,7 @@
 **关键问答：**
 -
 
-### 11.3 DPO 家族（DPO / IPO / KTO / SimPO）
+### 11.3 RLHF（RM + PPO）
 **参考资料：**
 -
 
@@ -502,7 +502,7 @@
 **关键问答：**
 -
 
-### 11.4 Reasoning 训练（RLVR / GRPO / DAPO / GSPO / 推理蒸馏）
+### 11.4 DPO 家族（DPO / IPO / KTO / SimPO）
 **参考资料：**
 -
 
@@ -512,7 +512,7 @@
 **关键问答：**
 -
 
-### 11.5 Agentic RL
+### 11.5 Reasoning 训练（RLVR / GRPO / DAPO / GSPO / 推理蒸馏）
 **参考资料：**
 -
 
@@ -522,7 +522,17 @@
 **关键问答：**
 -
 
-### 11.6 Constitutional AI / RLAIF
+### 11.6 Agentic RL
+**参考资料：**
+-
+
+**推理过程：**
+-
+
+**关键问答：**
+-
+
+### 11.7 Constitutional AI / RLAIF
 **参考资料：**
 -
 

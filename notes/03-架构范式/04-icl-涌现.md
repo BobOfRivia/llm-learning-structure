@@ -168,7 +168,7 @@ Total compute = train_FLOPs + serve_FLOPs × num_requests × thinking_tokens
 
 ICL（few-shot prompt）是 test-time 的低阶形态；
 CoT / self-consistency / search 是中阶；
-RL 训练出的 long-CoT 是高阶（§11.4 详）。
+RL 训练出的 long-CoT 是高阶（§11.5 详）。
 
 ---
 

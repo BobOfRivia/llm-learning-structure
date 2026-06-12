@@ -120,7 +120,7 @@ Chinchilla 只考虑**训练成本**，忽略**部署/推理成本**。
 ## 七、Scaling Law 的局限
 
 1. **数据质量假设恒定**：FineWeb-Edu 已经打破——更高质数据上同样 C 出更低 loss
-2. **不预测涌现能力**：MMLU、GSM8K 等的飞跃不是 loss 的平滑外推
+2. **不预测涌现能力**：MMLU、GSM8K 等的飞跃不是 loss 的平滑外推(详见 §3.4 ICL 与涌现)
 3. **不覆盖后训练**：SFT/RLHF/RLVR 的 scaling 是另一个体系
 4. **不覆盖 test-time compute**：o1/R1 的"推理时 scaling"是新维度
 5. **数据墙**：高质量人类语料可能在 10²-10³ T tokens 量级见顶

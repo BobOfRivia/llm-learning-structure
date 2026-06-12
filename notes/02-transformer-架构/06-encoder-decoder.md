@@ -2,6 +2,8 @@
 
 [← 返回框架](../../README.md) · [📎 materials.md → §2.6](../../materials.md)
 
+> **本节聚焦"机制":3 种 attention、teacher forcing、cross-attn、推理 KV 复用等工程细节。范式层面的特征、适用场景与历史地位详见 [§3.3 Encoder-Decoder 范式](../03-架构范式/03-encoder-decoder.md)。**
+
 ---
 
 ## 一、为什么这一节单独存在

@@ -6,9 +6,9 @@
 
 ## 〇、本节回答什么
 
-> 2024-09 OpenAI 发布 o1 之后，"用推理算力换质量"成为继 pretraining scaling、post-training scaling 之后的**第三条 scaling 曲线**。本节梳理：CoT / Self-Consistency / Best-of-N / Tree Search (ToT / MCTS / rStar) → o1 / R1 范式 → 2025 反直觉发现（"更长 ≠ 更好"、Short-m@k）。它既是推理优化的一种特殊"反向"——主动消耗更多算力，又是后训练（§11.4）的延伸——靠推理时搜索逼近 RLVR 的能力。
+> 2024-09 OpenAI 发布 o1 之后，"用推理算力换质量"成为继 pretraining scaling、post-training scaling 之后的**第三条 scaling 曲线**。本节梳理：CoT / Self-Consistency / Best-of-N / Tree Search (ToT / MCTS / rStar) → o1 / R1 范式 → 2025 反直觉发现（"更长 ≠ 更好"、Short-m@k）。它既是推理优化的一种特殊"反向"——主动消耗更多算力，又是后训练（§11.5）的延伸——靠推理时搜索逼近 RLVR 的能力。
 
-定位：本节关注 **inference-time techniques**，§11.4 关注 **training-time RL**。两者互补。
+定位：本节关注 **inference-time techniques**，§11.5 关注 **training-time RL**。两者互补。
 
 ---
 
@@ -99,7 +99,7 @@ Test-time compute 增加越多，BoN 收益越大——这就是 **inference sca
 | BoN 表现 | 中 | 强（但贵） |
 | 流派代表 | R1 用 ORM 路线 | OpenAI / DeepMind PRM800K |
 
-> R1 论文明确说：**PRM 难训、容易 reward hacking，ORM + RLVR 是更鲁棒路线**（详见 §11.4）。
+> R1 论文明确说：**PRM 难训、容易 reward hacking，ORM + RLVR 是更鲁棒路线**（详见 §11.5）。
 
 ---
 

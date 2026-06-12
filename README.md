@@ -8,6 +8,9 @@
 ## 补充知识（跨章节复用的工具笔记）
 
 - [KL 散度作为损失函数](notes/00-补充知识/01-kl散度作为损失函数.md) —— DSA 蒸馏 / RLHF / DPO / VAE 都要用
+- [反向传播与链式法则](notes/00-补充知识/02-反向传播与链式法则.md) —— MoE 路由 / softmax 反传 / stop-gradient 都要用
+- [logits 与归一化函数](notes/00-补充知识/03-logits-与归一化函数.md) —— 分类 / LM head / attention / MoE router / 采样 都要用
+- [GPU 运算基础 (GEMM / Roofline / Tensor Core)](notes/00-补充知识/04-gpu运算基础-gemm-roofline.md) —— MFU / FlashAttention / batched GEMM / CUDA Graph / 量化 都要用
 
 ---
 
@@ -61,8 +64,8 @@ Part VII  面试考点         §14
 - 4.1 KV-Cache 原理与显存公式：`2 · n_layer · n_head · head_dim · seq_len · dtype`
 - 4.2 **Roofline 模型**：算力 vs 带宽
 - 4.3 **Prefill (compute-bound) vs Decode (memory-bound)** —— 整个 LLM 推理优化的分水岭
-- 4.4 Arithmetic Intensity / FLOPs / MFU / HFU 指标体系
-- 4.5 显存四块：参数 + 梯度 + 优化器状态 + 激活
+- 4.4 Arithmetic Intensity / FLOPs / MFU / HFU 指标体系（训练-推理统一视角）
+- 4.5 RDMA & GPUDirect（Disaggregated Serving 的网络基石）
 
 ### §5  稠密注意力优化
 > 不改变注意力数学等价性的"纯工程加速"。
@@ -109,30 +112,31 @@ Part VII  面试考点         §14
 
 ## Part IV  训练体系
 
-### §10  预训练 + 并行化 + PEFT
+### §10  预训练 + 并行化
 - 10.1 预训练流程：data → tokenization → 训练 → checkpointing
 - 10.2 **混合精度**：FP32 / FP16 / BF16 / FP8
-- 10.3 **并行化体系**：
+- 10.3 **显存四块**：参数 + 梯度 + 优化器状态 + 激活（16N 公式 / Adam=12N）
+- 10.4 **并行化体系**：
   - **DP / TP / PP / SP / EP / CP（Context Parallel）**
   - **ZeRO 1/2/3 / FSDP**
   - Megatron-LM 实现
   - 3D/4D/5D Parallelism
-- 10.4 **PEFT 家族**：**LoRA → QLoRA → DoRA → AdaLoRA**
 - 10.5 **知识蒸馏**（属于训练，不是推理）
 
 ### §11  后训练（Alignment + Reasoning）
 > 这条线决定模型"对齐"和"会推理"。
 
 - 11.1 **SFT**（Supervised Fine-Tuning）
-- 11.2 **RLHF**：Reward Model + **PPO**
-- 11.3 **DPO** 及其变种（IPO / KTO / SimPO）
-- 11.4 **Reasoning 训练**：
+- 11.2 **PEFT 家族**：**LoRA → QLoRA → DoRA → AdaLoRA**（SFT/对齐的轻量化分支）
+- 11.3 **RLHF**：Reward Model + **PPO**
+- 11.4 **DPO** 及其变种（IPO / KTO / SimPO）
+- 11.5 **Reasoning 训练**：
   - **RLVR**（Verifiable Reward）
   - **GRPO**（DeepSeek-R1）
   - 推理蒸馏（R1 → 小模型）
   - **DAPO、GSPO**（2025-2026 演进）
-- 11.5 **Agentic RL**：工具使用、多步推理、环境交互
-- 11.6 Constitutional AI / RLAIF
+- 11.6 **Agentic RL**：工具使用、多步推理、环境交互
+- 11.7 Constitutional AI / RLAIF
 
 ---
 

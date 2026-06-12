@@ -1,6 +1,6 @@
-# 11.6 Constitutional AI / RLAIF（规模化 AI 反馈）
+# 11.7 Constitutional AI / RLAIF（规模化 AI 反馈）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.6](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.7](../../materials.md)
 
 ---
 
@@ -576,10 +576,10 @@ $$
 ## 九、本节与第 11 章总结
 
 ```
-§11.6 RLAIF / CAI (本节)
+§11.7 RLAIF / CAI (本节)
    │
    └─ 数据来源层面的革命：人类 → AI judge
-      └─ 与 §11.2 PPO / §11.3 DPO / §11.4 GRPO 正交组合
+      └─ 与 §11.3 PPO / §11.4 DPO / §11.5 GRPO 正交组合
          任何 RL 算法都可换上 RLAIF 数据源
 ```
 
@@ -587,25 +587,26 @@ $$
 
 ```
 §11.1 SFT                    → 教格式、激发能力（不灌知识）
-§11.2 RLHF (PPO)             → 经典 RL 对齐，上限高工程贵
-§11.3 DPO 家族                → offline 简化，2024 工业主流
-§11.4 RLVR / GRPO            → verifiable reward + reasoning RL
-§11.5 Agentic RL             → 多轮工具调用 + 长 horizon
-§11.6 Constitutional / RLAIF → 数据规模化，正交于算法层（本节）
+§11.2 PEFT                   → LoRA / QLoRA / DoRA 等参数高效适配
+§11.3 RLHF (PPO)             → 经典 RL 对齐，上限高工程贵
+§11.4 DPO 家族                → offline 简化，2024 工业主流
+§11.5 RLVR / GRPO            → verifiable reward + reasoning RL
+§11.6 Agentic RL             → 多轮工具调用 + 长 horizon
+§11.7 Constitutional / RLAIF → 数据规模化，正交于算法层（本节）
 ```
 
 **后训练的 2026 标准 pipeline**：
 
 ```
-SFT (§11.1) 
+SFT (§11.1)  [→ PEFT §11.2 视显存而定]
    ↓
-DPO / Iterative DPO (§11.3)        ← RLAIF 提供数据 (§11.6)
+DPO / Iterative DPO (§11.4)        ← RLAIF 提供数据 (§11.7)
    ↓
-RLVR / GRPO (§11.4)                 ← Reasoning 强化
+RLVR / GRPO (§11.5)                 ← Reasoning 强化
    ↓
-[可选] Agentic RL (§11.5)           ← 多轮工具
+[可选] Agentic RL (§11.6)           ← 多轮工具
    ↓
-推理蒸馏（大模型 → 小模型，§10.5 + §11.4）
+推理蒸馏（大模型 → 小模型，§10.5 + §11.5）
    ↓
 Deployment
 ```

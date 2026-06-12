@@ -49,7 +49,7 @@
 
 ---
 
-## 二、RLHF + PPO（→ §11.2）
+## 二、RLHF + PPO（→ §11.3）
 
 ### Q2.1 RLHF 三阶段是什么？ ⭐
 
@@ -126,7 +126,7 @@ $$
 
 ---
 
-## 三、DPO 家族（→ §11.3）
+## 三、DPO 家族（→ §11.4）
 
 ### Q3.1 DPO 的目标函数和直觉？ ⭐⭐⭐
 
@@ -197,7 +197,7 @@ $$
 
 ---
 
-## 四、Reasoning 训练 / RLVR / GRPO（→ §11.4）
+## 四、Reasoning 训练 / RLVR / GRPO（→ §11.5）
 
 ### Q4.1 RLVR 是什么？为什么 reasoning 必须用它？ ⭐⭐⭐
 
@@ -290,7 +290,7 @@ DeepSeek-R1 (2025-01) 多阶段：
 
 ---
 
-## 五、Agentic RL（→ §11.5）
+## 五、Agentic RL（→ §11.6）
 
 ### Q5.1 Agentic RL 和 RLHF 区别？ ⭐⭐
 
@@ -314,7 +314,7 @@ DeepSeek-R1 (2025-01) 多阶段：
 
 ---
 
-## 六、Constitutional AI / RLAIF（→ §11.6）
+## 六、Constitutional AI / RLAIF（→ §11.7）
 
 ### Q6.1 CAI 是什么？ ⭐
 

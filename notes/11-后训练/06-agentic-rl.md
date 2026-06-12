@@ -1,6 +1,6 @@
-# 11.5 Agentic RL（多轮工具调用 + 长程信用分配）
+# 11.6 Agentic RL（多轮工具调用 + 长程信用分配）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.5](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.6](../../materials.md)
 
 ---
 
@@ -8,11 +8,11 @@
 
 > 让 LLM 当 agent（用工具、写代码、调 API、修 PR、操作浏览器）需要怎么训？和单轮 reasoning RL 区别在哪？长 horizon、稀疏 reward 上 credit assignment 怎么做？2024-2025 的代表工作是什么？为什么 agentic RL 的瓶颈不在 LLM 而在环境基建？
 
-Agentic RL 是 **§11.4 reasoning RL 在多轮工具交互轨迹上的自然延伸**：
+Agentic RL 是 **§11.5 reasoning RL 在多轮工具交互轨迹上的自然延伸**：
 
 ```
-§11.4 reasoning RL:  问题 → 长 CoT → 答案 → verify (single turn)
-§11.5 agentic RL:    任务 → think → tool → obs → think → tool → ... → 完成 → verify (多 turn)
+§11.5 reasoning RL:  问题 → 长 CoT → 答案 → verify (single turn)
+§11.6 agentic RL:    任务 → think → tool → obs → think → tool → ... → 完成 → verify (多 turn)
 ```
 
 相比单轮 reasoning，agentic 多了三件事：
@@ -45,7 +45,7 @@ Agentic RL 是 **§11.4 reasoning RL 在多轮工具交互轨迹上的自然延�
 
 ### 1.1 单轮 vs 多轮
 
-R1 范式（§11.4）：**single-turn**——给问题，输出 CoT + 答案，verify。整段 trajectory 是模型内独立产生的 token 序列。
+R1 范式（§11.5）：**single-turn**——给问题，输出 CoT + 答案，verify。整段 trajectory 是模型内独立产生的 token 序列。
 
 Agentic 场景：**multi-turn**——模型产生 action（tool call），环境产生 observation，模型基于 observation 产生下一个 action：
 
@@ -262,7 +262,7 @@ for each prompt (task):
     update
 ```
 
-→ 即 §11.4 的 GRPO，trajectory 里多了 tool/obs token，loss mask 配合调整。
+→ 即 §11.5 的 GRPO，trajectory 里多了 tool/obs token，loss mask 配合调整。
 
 实现要点：
 
@@ -275,7 +275,7 @@ for each prompt (task):
 
 长 trajectory 上 token-level $\rho$ 容易方差爆炸（成千 token 累乘）。
 
-**解 1**：用 **GSPO**（§11.4 §五）的 sequence-level ratio，每条 trajectory 一个 $\rho_{\text{seq}}$。
+**解 1**：用 **GSPO**（§11.5 §五）的 sequence-level ratio，每条 trajectory 一个 $\rho_{\text{seq}}$。
 
 **解 2**：更激进的 **trajectory-level normalize**——按 trajectory 平均 log-prob 算 ratio，整条共享 clip。
 
@@ -561,12 +561,12 @@ Cursor / Claude Code 偏交互式（用户 in-the-loop），训练数据是真�
 ## 九、本节与其他节关系
 
 ```
-§11.4 RLVR / GRPO ──→ §11.5 Agentic RL (本节)
+§11.5 RLVR / GRPO ──→ §11.6 Agentic RL (本节)
        │                    │
        │ 单轮 reasoning     │ 多轮 + 工具
        │ verifiable reward  │ 长 horizon
        │                    ↓
-       │                §11.6 RLAIF (规模化 reward signal)
+       │                §11.7 RLAIF (规模化 reward signal)
        │
 §8 长上下文 ─→ trajectory 装得下
 §9 MoE     ─→ 大 agent 模型常用 MoE 节省推理
@@ -579,7 +579,7 @@ Agentic RL 是 reasoning RL 在多轮工具交互上的扩展——算法层基�
 - 工程栈（环境是 throughput 瓶颈）；
 - Credit assignment（长 horizon + dense reward）。
 
-理解 §11.4 是理解本节的前提；而本节又是理解未来 "general-purpose agent training" 的基础。
+理解 §11.5 是理解本节的前提；而本节又是理解未来 "general-purpose agent training" 的基础。
 
 ---
 

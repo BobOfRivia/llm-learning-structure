@@ -1,6 +1,6 @@
-# 11.2 RLHF（RM + PPO）
+# 11.3 RLHF（RM + PPO）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.2](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.3](../../materials.md)
 
 ---
 
@@ -93,7 +93,7 @@ rejected:  "牛顿是个很厉害的物理学家，他提出了很多定律 ..."
 数据来源：
 
 - **公开**：Anthropic HH-RLHF（160k 条 helpful + harmless）、UltraFeedback（GPT-4 生成的合成偏好）、HelpSteer2（NVIDIA 开源，多维度）。
-- **合成**：用更强模型当 "AI annotator" 打分（详见 §11.6 RLAIF）。
+- **合成**：用更强模型当 "AI annotator" 打分（详见 §11.7 RLAIF）。
 - **真实日志**：用户 thumbs up/down 信号（噪声大但分布最真）。
 
 ### 3.2 Bradley-Terry 模型：从偏好概率推 reward
@@ -490,10 +490,10 @@ PPO 工程太重 → 涌现一系列**轻量化变体**：
 |---|---|---|
 | **REINFORCE++** | 去掉 critic，用 batch baseline + 多个稳定技巧 | 工程简单，2024 复兴 |
 | **RLOO** (Cohere 2024) | Leave-One-Out baseline | 用同 prompt 其他 sample 的平均当 baseline |
-| **GRPO** (DeepSeek 2024) | Group-relative advantage | R1 主力（详见 §11.4） |
+| **GRPO** (DeepSeek 2024) | Group-relative advantage | R1 主力（详见 §11.5） |
 | **GSPO** (Qwen 2025) | Sequence-level importance ratio | long CoT 更稳 |
 | **DAPO** (ByteDance 2025) | Decoupled clip + dynamic sampling | reasoning 实战 |
-| **DPO 家族** | 完全跳过 RL（offline） | 见 §11.3 |
+| **DPO 家族** | 完全跳过 RL（offline） | 见 §11.4 |
 | **Reference-free PPO** | 移除 ref model | 显存省，但需更强 KL 替代 |
 
 **2025 工业现状**：
@@ -540,7 +540,7 @@ PPO 工程太重 → 涌现一系列**轻量化变体**：
 **Q7**：PPO 训完了还要做什么？
 - **迭代式**：再 SFT (用 PPO 模型做 rejection sampling) → 再 PPO → 直到收敛。Llama-3 报告做了 6 轮 SFT-DPO 迭代。
 - **接 reasoning RL**：用 verifiable reward（GRPO）替代或补充 RM。
-- **接安全 alignment**：CAI / RLAIF（§11.6）。
+- **接安全 alignment**：CAI / RLAIF（§11.7）。
 
 **Q8**：为什么 token-level KL 是有效的近似？
 - 严格的 sequence-level KL 需要对整个 $\pi_\theta(y|x)$ 积分，不可解。
@@ -554,22 +554,22 @@ PPO 工程太重 → 涌现一系列**轻量化变体**：
 
 **Q10**：能不能跳过 RM 直接 PPO？
 - 不能。PPO 必须有 reward signal，RM 是 RLHF 路径的 reward 来源。
-- 替代：用 verifiable reward（程序化校验，见 §11.4）或 LLM-as-judge reward（见 §11.6），或者切换到 DPO（不需要 RM）。
+- 替代：用 verifiable reward（程序化校验，见 §11.5）或 LLM-as-judge reward（见 §11.7），或者切换到 DPO（不需要 RM）。
 
 ---
 
 ## 八、本节与其他节关系
 
 ```
-§11.1 SFT ──────────────→ §11.2 PPO (本节) ←── reward model
+§11.1 SFT ──────────────→ §11.3 PPO (本节) ←── reward model
                                 ↓
-                          §11.3 DPO 家族（简化的 offline 方案）
+                          §11.4 DPO 家族（简化的 offline 方案）
                                 ↓
-                          §11.4 RLVR / GRPO（verifiable reward 替代 RM）
+                          §11.5 RLVR / GRPO（verifiable reward 替代 RM）
                                 ↓
-                          §11.5 Agentic RL（长程多轮）
+                          §11.6 Agentic RL（长程多轮）
                                 ↓
-                          §11.6 Constitutional / RLAIF（规模化 reward）
+                          §11.7 Constitutional / RLAIF（规模化 reward）
 ```
 
 PPO 是后训练 RL 的母算法：DPO 是它的 offline 简化；GRPO 是它去掉 critic 的群体 baseline 版本；DAPO/GSPO 是 GRPO 的稳定性改进。理解 PPO 是理解后面所有变体的前提。

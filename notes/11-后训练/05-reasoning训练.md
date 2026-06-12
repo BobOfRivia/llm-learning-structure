@@ -1,6 +1,8 @@
-# 11.4 Reasoning 训练（RLVR / GRPO / DAPO / GSPO / 推理蒸馏）
+# 11.5 Reasoning 训练（RLVR / GRPO / DAPO / GSPO / 推理蒸馏）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.4](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.5](../../materials.md)
+
+> **训练侧:把"会推理"练到模型里。推理侧的姊妹章节 — 怎么在推理时花更多 token 逼近 RL 训出的能力 — 见 [§12.6 Test-Time Scaling](../12-推理优化/06-test-time-scaling.md)。两者构成 reasoning 时代的双轴 scaling。**
 
 ---
 
@@ -18,7 +20,7 @@ RLVR (Reinforcement Learning with Verifiable Rewards)
 长 CoT、能"想"几千 token 再答的 reasoning 模型
 ```
 
-它和经典 RLHF（§11.2-3）的根本区别在 **reward 来源**：
+它和经典 RLHF（§11.3-4）的根本区别在 **reward 来源**：
 
 - **RLHF**：reward = 学到的 RM（neural net 估计的人类偏好）→ 易被 hack；
 - **RLVR**：reward = 程序化校验（数学答案对错、代码 unit test）→ 0/1 信号，无法 hack。
@@ -43,7 +45,7 @@ RLVR (Reinforcement Learning with Verifiable Rewards)
 
 ### 1.1 RLHF 的根本困难
 
-回顾 §11.2：RLHF 的 reward 是 **learned RM**。这带来三个根本问题：
+回顾 §11.3：RLHF 的 reward 是 **learned RM**。这带来三个根本问题：
 
 1. **OOD 不可靠**：RM 在训练分布内打分准确，policy 一旦走到 OOD（如生成新格式、新策略），RM 就乱给分；
 2. **Reward hacking 不可避免**（Goodhart's Law）：RM 是 quality 的代理，policy 会找到代理的漏洞；
@@ -183,7 +185,7 @@ $$
 \mathcal{L}^{\text{PPO}}(\theta) = \mathbb{E}_t\big[ \min(\rho_t A_t, \text{clip}(\rho_t, 1-\epsilon, 1+\epsilon) A_t) \big]
 $$
 
-$A_t$ 用 GAE 算，依赖 $V(s_t)$——需要 **critic**（一个和 policy 同尺寸的 value 模型）。70B PPO 训 critic 显存压力巨大（详见 §11.2 §4.5）。
+$A_t$ 用 GAE 算，依赖 $V(s_t)$——需要 **critic**（一个和 policy 同尺寸的 value 模型）。70B PPO 训 critic 显存压力巨大（详见 §11.3 §10.3）。
 
 **核心问题**：能不能不要 critic？答案是可以——只要找到一个**无偏的 baseline 替代 $V(s_t)$**。
 
@@ -662,21 +664,21 @@ entropy:          缓慢下降（policy 收敛），但保持 explore
 ```
 §11.1 SFT
    ↓
-§11.2 PPO  ─┐
-§11.3 DPO  ─┴── 经典对齐（learned reward）
+§11.3 PPO  ─┐
+§11.4 DPO  ─┴── 经典对齐（learned reward）
    ↓
-§11.4 RLVR / GRPO (本节) ── reasoning 新主线（verifiable reward）
+§11.5 RLVR / GRPO (本节) ── reasoning 新主线（verifiable reward）
    ↓
-§11.5 Agentic RL          ── 多轮工具调用 + 长 horizon
+§11.6 Agentic RL          ── 多轮工具调用 + 长 horizon
    ↓
 §10.5 蒸馏 (R1-Distill)    ── 把大模型推理能力压到小模型
 ```
 
 GRPO 是 PPO 的减法（去 critic）+ DPO 的补法（保留 RL on-policy 优势）的混合。理解路径：
 
-- PPO 是母算法（§11.2）；
-- DPO 是 offline 简化（§11.3）；
-- GRPO 是 critic 简化 + verifiable reward（§11.4）；
+- PPO 是母算法（§11.3）；
+- DPO 是 offline 简化（§11.4）；
+- GRPO 是 critic 简化 + verifiable reward（§11.5）；
 - DAPO / GSPO 是 GRPO 在长 CoT 上的稳定性补丁。
 
 ---

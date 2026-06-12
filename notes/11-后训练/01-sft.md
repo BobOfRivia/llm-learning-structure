@@ -12,7 +12,7 @@ SFT 是后训练（Post-training）的第一步。一句话定位：
 
 > **SFT = 激发 base model 已有能力 + 把行为对齐到 instruction-following 输出格式。**
 
-它**不是**用来灌新知识的（灌新知识 → §10.5 continued pretraining，或 RAG），**也不是**用来"让模型变聪明"的（变聪明 → §11.4 reasoning RL）。这条边界 2023+ 已成共识，本节会给出形式化的解释。
+它**不是**用来灌新知识的（灌新知识 → §10.1 continued pretraining，或 RAG），**也不是**用来"让模型变聪明"的（变聪明 → §11.4 reasoning RL）。这条边界 2023+ 已成共识，本节会给出形式化的解释。
 
 ```
 base model (next-token predictor)
@@ -133,7 +133,7 @@ Superficial Alignment Hypothesis **不是说 SFT 完全没用**，也不是说"S
 
 - SFT 的**主要贡献**是"行为重定向"——所以质量比数量重要得多。
 - 一旦把行为对齐到，**再加更多同分布数据收益递减**（边际接近 0）。
-- 它没有否定 RLHF 阶段的价值：偏好对齐、reasoning RL 仍是 SFT **无法替代**的（详见 §11.2-4）。
+- 它没有否定 RLHF 阶段的价值：偏好对齐、reasoning RL 仍是 SFT **无法替代**的（详见 §11.3-5）。
 
 实证边界：LIMA 1k 样本能跑出"差不多能用"的 chat，但和 Llama-3 用 100w 精挑数据训出的模型仍有可见差距（IFEval/MT-Bench 差 5-10 个点）。所以工业上**不会**真用 1k 条 SFT 出货，但这个数字告诉你"**多到一定量后纯量上没用了**"。
 
@@ -365,7 +365,7 @@ $$
 | 多任务部署 | 一个 checkpoint 一个用途 | 多个 LoRA 适配同一 base |
 | 适用 | 工业大厂 / 主力模型 | 中小团队 / 垂域 / 实验快迭代 |
 
-经验：能 full 就 full；显存不够再 LoRA；多任务同 base 时 LoRA 不可替代。详见 §10.4 PEFT。
+经验：能 full 就 full；显存不够再 LoRA；多任务同 base 时 LoRA 不可替代。详见 §11.2 PEFT。
 
 ### 6.3 训练曲线监控
 
@@ -485,11 +485,13 @@ pretrain（§10）
     ↓
 SFT（§11.1，本节）           ← 教格式、激发能力
     ↓
-DPO / PPO（§11.2-3）        ← 偏好对齐
+[显存不够] PEFT（§11.2）     ← LoRA / QLoRA 等
     ↓
-RLVR / GRPO（§11.4）        ← 推理能力强化
+DPO / PPO（§11.3-4）        ← 偏好对齐
     ↓
-[可选] Agentic RL（§11.5）   ← 工具调用与多轮
+RLVR / GRPO（§11.5）        ← 推理能力强化
+    ↓
+[可选] Agentic RL（§11.6）   ← 工具调用与多轮
     ↓
 deploy
 ```
@@ -541,7 +543,7 @@ deploy
 
 **Q7**：SFT 之后还要不要 RLHF？
 - 一般要。SFT 只能学**示范**，不能学**偏好对比**；安全、helpfulness、reasoning 都靠 RL 阶段强化。
-- DPO 是 SFT 后最常见的下一步（offline、便宜、稳定，见 §11.3）。
+- DPO 是 SFT 后最常见的下一步（offline、便宜、稳定，见 §11.4）。
 - 如果你只关心"基本能听话"，SFT 已经够；但只要想刷 leaderboard 或商用，RL 阶段就跑不掉。
 
 **Q8**：SFT 训完模型生成开头总是"Sure, I'd be happy to help..."怎么办？

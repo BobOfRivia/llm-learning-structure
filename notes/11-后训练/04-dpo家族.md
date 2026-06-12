@@ -1,6 +1,6 @@
-# 11.3 DPO 家族（DPO / IPO / KTO / SimPO / ORPO）
+# 11.4 DPO 家族（DPO / IPO / KTO / SimPO / ORPO）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.3](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.4](../../materials.md)
 
 ---
 
@@ -13,7 +13,7 @@ DPO（Direct Preference Optimization, Rafailov 2023）是 2024 年成为**事实
 > **DPO 的发现**：在 KL-regularized RL 目标下，**最优策略与奖励之间是一对一的解析对应**——所以**根本不需要先学 reward 再 RL**，可以直接用偏好数据写出一个**监督学习** loss，把策略推到 RL 的最优解。
 
 ```
-RLHF (§11.2):  pref data → RM → PPO loop (4 个模型同时驻留)
+RLHF (§11.3):  pref data → RM → PPO loop (4 个模型同时驻留)
 DPO (本节):    pref data ────────→ 1 个 BCE-like loss (policy + ref)
 ```
 
@@ -32,7 +32,7 @@ DPO (本节):    pref data ────────→ 1 个 BCE-like loss (poli
 
 ### 1.1 第一步：KL-regularized RL 目标的最优解
 
-RLHF 的 RL 阶段目标（§11.2 §4.2）：
+RLHF 的 RL 阶段目标（§11.3 §4.2）：
 
 $$
 \max_{\pi} \; \mathbb{E}_{x \sim \mathcal{D}, y \sim \pi(\cdot|x)} \big[ r(x, y) \big] - \beta \cdot \mathbb{E}_x\big[ \text{KL}\big( \pi(\cdot|x) \,\|\, \pi_{\text{ref}}(\cdot|x) \big) \big]
@@ -86,7 +86,7 @@ $$
 
 ### 1.3 第三步：套 Bradley-Terry，$\log Z(x)$ 神奇消失
 
-Bradley-Terry 偏好概率（§11.2 §3.2）：
+Bradley-Terry 偏好概率（§11.3 §3.2）：
 
 $$
 P(y_w \succ y_l | x) = \sigma\big( r(x, y_w) - r(x, y_l) \big)
@@ -455,7 +455,7 @@ for batch in stream:
 | cDPO | ✅ | ❌ | pairs (noisy) | ❌ | label smoothing 处理噪声 |
 | DPOP | ✅ | ❌ | pairs | ❌ | 防 chosen log-prob 退化 |
 | **Iterative DPO** | ✅ | ✅ | pairs | ❌ | Llama-3 范式 |
-| PPO (§11.2) | ✅ | ✅ | RM scalar | ❌ | 经典 RL，上限高 |
+| PPO (§11.3) | ✅ | ✅ | RM scalar | ❌ | 经典 RL，上限高 |
 
 ---
 
@@ -469,7 +469,7 @@ for batch in stream:
 只有 like/dislike 信号         →  KTO
 SFT + 偏好一起做（数据少）     →  ORPO
 追求 leaderboard               →  SimPO + DPO 双跑取最好
-复杂场景（reasoning）          →  SFT → DPO → RLVR/GRPO（§11.4）
+复杂场景（reasoning）          →  SFT → DPO → RLVR/GRPO（§11.5）
 ```
 
 **2025 工业标准栈**：
@@ -539,11 +539,11 @@ SFT + 偏好一起做（数据少）     →  ORPO
 ## 十、本节与其他节关系
 
 ```
-§11.1 SFT  ──→ §11.2 PPO         (上限高，工程贵)
+§11.1 SFT  ──→ §11.3 PPO         (上限高，工程贵)
                 ↓
-            §11.3 DPO 家族 (本节)
+            §11.4 DPO 家族 (本节)
                 ↓
-            §11.4 RLVR / GRPO    (verifiable reward + 群体 baseline)
+            §11.5 RLVR / GRPO    (verifiable reward + 群体 baseline)
 ```
 
 DPO 家族借鉴 RL 闭式解思想做"伪 RL"；GRPO 又借鉴 DPO 的简化 + REINFORCE++ 的 baseline 思想。理解路径：**PPO（母算法）→ DPO（offline 简化）→ GRPO（group baseline + verifiable reward）**。

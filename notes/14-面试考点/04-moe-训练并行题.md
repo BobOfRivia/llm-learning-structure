@@ -149,7 +149,34 @@
 
 ---
 
-### Q2.2 ZeRO 1/2/3 区别？和 FSDP 关系？ ⭐⭐
+### Q2.2 显存四块怎么算？训练 70B 全参 BF16 + Adam 需要多少？（→ §10.3） ⭐⭐⭐
+
+**【答 30s】**
+
+| 部分 | 公式 | 70B BF16 | 备注 |
+| --- | --- | --- | --- |
+| 参数 | N · 2 byte | 140 GB | 主参数 |
+| 梯度 | N · 2 byte | 140 GB | 同 dtype |
+| 优化器状态（Adam） | N · 12 byte | 840 GB | fp32 master + m + v |
+| 激活 | 与 batch/seq 相关 | 几百 GB | gradient checkpointing 可砍 |
+
+**合计 ~1.1 TB+**，远超单卡 80GB → 必须 TP/PP/ZeRO 切分(详见 Q2.3)。
+
+**【加分项】**
+- Adam 12 byte/param = fp32 master (4) + m (4) + v (4)
+- 经典 16N 公式：BF16 (2+2) + Adam fp32 state (12) = 16 byte / param
+- FP8 训练:参数+梯度 1+1 byte/p、master 仍 fp32，整体可省 ~40% (DeepSeek-V3)
+- 激活省法：gradient checkpointing（recompute）、SP、CP、FlashAttention
+
+**【追问】**
+1. 为什么优化器状态最大？→ Adam 要存 fp32 master + 一阶矩 + 二阶矩
+2. SGD 显存多少？→ 4N (仅 m)，但 LLM 不用 SGD,因收敛慢
+3. 推理（不训）只要多少？→ 70B BF16 单纯权重 140GB；70B fp8 70GB；70B int4 ~35GB
+4. QLoRA 微调 70B 凭什么单卡 24GB 能塞下？→ base NF4 量化 ~35GB 内不到一半,梯度+optimizer 只对 LoRA 参数 (~0.1N)，详见 §11.2
+
+---
+
+### Q2.3 ZeRO 1/2/3 区别？和 FSDP 关系？ ⭐⭐
 
 **【答 30s】**
 
@@ -175,7 +202,7 @@
 
 ---
 
-### Q2.3 混合精度 FP32 / FP16 / BF16 / FP8 区别？ ⭐⭐
+### Q2.4 混合精度 FP32 / FP16 / BF16 / FP8 区别？ ⭐⭐
 
 **【答 30s】**
 
@@ -202,7 +229,7 @@
 
 ---
 
-### Q2.4 LoRA / QLoRA / DoRA / AdaLoRA 区别？ ⭐⭐
+### Q2.5 LoRA / QLoRA / DoRA / AdaLoRA 区别？（PEFT,主章已搬至 §11.2） ⭐⭐
 
 **【答 30s】**
 
@@ -226,7 +253,7 @@
 
 ---
 
-### Q2.5 知识蒸馏分类 + 在 LLM 里怎么用？ ⭐⭐
+### Q2.6 知识蒸馏分类 + 在 LLM 里怎么用？ ⭐⭐
 
 **【答 30s】**
 - **Response distillation**（黑盒）：用 teacher 生成的输出文本作 SFT 数据
