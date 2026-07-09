@@ -1,12 +1,22 @@
 # 11.4 DPO 家族（DPO / IPO / KTO / SimPO / ORPO）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.4](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.4](../../materials.md) · [⇡ 章节导论](./00-章节导论.md)
 
 ---
 
 ## 〇、本节回答什么
 
 > 为什么 DPO 能在**不用 reward model、不用 RL 循环**的情况下完成"偏好对齐"，而且数学上看起来等价于 RLHF？KL-regularized 最优策略的闭式解到底说了什么？IPO / KTO / SimPO / ORPO 各自解决 DPO 的什么缺陷？为什么训练后 chosen 和 rejected 的 log-prob 经常**一起下降**？2024-2025 工业上怎么选？
+
+**本节在第 11 章的位置**（[§11.0 导论](./00-章节导论.md) 中的"PPO 两条简化路径之 offline 支"）：
+
+- **来自 §11.3 PPO**：DPO 利用 PPO 的 KL-regularized 最优解写出**闭式**，把"先学 RM 再 RL"折叠成"一个监督 loss"——**模型数从 4 减到 2**；
+- **与 §11.5 GRPO 平行**：DPO 砍掉的是 **RL 循环 + RM + critic**（保留 offline 训练）；GRPO 砍掉的是 **critic + learned RM**（保留 on-policy RL）。**两者不互相替代**——DPO 适配 chat 偏好对齐，GRPO 适配 reasoning（详见 §10 决策树）；
+- **上游**：§11.1 SFT（DPO 的 $\pi_{\text{ref}}$ = SFT 模型）；
+- **下游**：§11.5 GRPO（reasoning 强化）或 Iterative DPO（同节 §六，回到 on-policy）；
+- **正交话题**：DPO + LoRA = Zephyr-7B / Tulu 系开源对齐主流路径（→ §11.2）；DPO 数据从 LLM judge 合成 → §11.7 RLAIF（UltraFeedback / Magpie-DPO）。
+
+本节的"数学核心"是一个三步推导（KL-regularized 最优解 → 反解 reward → 套 Bradley-Terry，$\log Z(x)$ 神奇消失）——把这三步看懂，整个 DPO 家族的变体就都是在这条骨架上做小手术。
 
 DPO（Direct Preference Optimization, Rafailov 2023）是 2024 年成为**事实标准**的偏好对齐方法：
 
@@ -538,15 +548,33 @@ SFT + 偏好一起做（数据少）     →  ORPO
 
 ## 十、本节与其他节关系
 
+按 [§11.0 导论](./00-章节导论.md) 定位：DPO 是 PPO 的 **offline 简化支**，与 §11.5 GRPO 的 **on-policy 简化支** 平行。
+
 ```
-§11.1 SFT  ──→ §11.3 PPO         (上限高，工程贵)
-                ↓
-            §11.4 DPO 家族 (本节)
-                ↓
-            §11.5 RLVR / GRPO    (verifiable reward + 群体 baseline)
+                §11.1 SFT
+                   ↓ π_ref
+                §11.3 PPO (母算法)
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+   offline 简化             on-policy 简化
+        ▼                     ▼
+   §11.4 DPO 家族 (本节)     §11.5 RLVR / GRPO
+   {DPO, IPO, KTO,           {GRPO, DAPO, GSPO}
+    SimPO, ORPO,             verifiable reward
+    DPOP, cDPO}               group baseline
+        │                     │
+        │ Iterative DPO       │
+        └──────┬──────────────┘
+               ▼ (工业上常串行：chat 偏好→ reasoning)
+        §11.6 Agentic RL
+
+正交话题:
+  §11.2 PEFT      ── DPO + LoRA / QLoRA (Zephyr / Tulu 路径)
+  §11.7 RLAIF/CAI ── UltraFeedback / Magpie / LLM-judge 合成 DPO 数据
 ```
 
-DPO 家族借鉴 RL 闭式解思想做"伪 RL"；GRPO 又借鉴 DPO 的简化 + REINFORCE++ 的 baseline 思想。理解路径：**PPO（母算法）→ DPO（offline 简化）→ GRPO（group baseline + verifiable reward）**。
+**记忆口诀**：DPO 把"PPO 的 KL-regularized 最优策略公式"反过来用——既然最优解长这个样子，那**直接把策略硬塞进去 + 偏好概率写 BCE** 就好了。$\log Z(x)$ 在差分时刚好抵消，是这个套路成立的关键魔术。
 
 ---
 

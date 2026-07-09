@@ -1,12 +1,20 @@
 # 11.1 SFT（Supervised Fine-Tuning）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.1](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.1](../../materials.md) · [⇡ 章节导论](./00-章节导论.md)
 
 ---
 
 ## 〇、本节回答什么
 
 > 怎么把 pretrained base model 调成"能听指令的 chat model"？SFT 的数学目标到底是什么、和 pretrain 的 next-token-prediction 有什么区别？loss masking、packing、多轮对话怎么处理才严谨？数据量、配比、epoch 的工业经验是什么？SFT 失败的几种典型形态，机制是什么？
+
+**本节在第 11 章的位置**（先看 [§11.0 导论](./00-章节导论.md) 全景图）：
+
+- **主线起点**：后训练算法主线 SFT → PPO → DPO → GRPO → Agent 的第一步；
+- **上游**：base model（§10 预训练）；
+- **下游**：§11.3 RLHF/PPO（引入比较信号）或 §11.4 DPO（offline 简化）；
+- **正交话题**：显存不够 → §11.2 PEFT 把 SFT 改成 LoRA/QLoRA；SFT 数据想自动产 → §11.7 CAI / RLAIF；
+- **常见误区**：SFT **不是**灌新知识（→ §10.1 continued pretraining）、**不是**训推理（→ §11.5 RLVR）。
 
 SFT 是后训练（Post-training）的第一步。一句话定位：
 
@@ -480,21 +488,31 @@ SFT 阶段的 loss 是 "在 SFT 数据上的拟合度"，**不直接反映 chat 
 
 ## 九、SFT 在后训练流水中的位置
 
+按 [§11.0 导论](./00-章节导论.md) 的"算法主线 + 两条正交话题"结构定位：
+
 ```
-pretrain（§10）
+   ┌────────────  算法主线  ────────────┐
+   │                                      │
+pretrain (§10)
     ↓
-SFT（§11.1，本节）           ← 教格式、激发能力
+SFT (§11.1, 本节)              ← 教格式、激发已有能力
+    ↓                          
+PPO (§11.3)  ─┐                ← 引入比较信号（learned RM）
+              │   ↘
+DPO (§11.4)  ─┤    ← offline 简化（去 RM、去 critic）
+              │   ↘  
+GRPO/RLVR (§11.5) ← 去 critic + verifiable reward (reasoning)
     ↓
-[显存不够] PEFT（§11.2）     ← LoRA / QLoRA 等
-    ↓
-DPO / PPO（§11.3-4）        ← 偏好对齐
-    ↓
-RLVR / GRPO（§11.5）        ← 推理能力强化
-    ↓
-[可选] Agentic RL（§11.6）   ← 工具调用与多轮
+Agentic RL (§11.6)             ← 多轮工具 + 长 horizon
     ↓
 deploy
+   │                                      │
+   └─────────  与之正交的话题  ──────────┘
+         §11.2 PEFT  (显存效率：LoRA/QLoRA，可叠加在 SFT/PPO/DPO/GRPO 任一阶段)
+         §11.7 CAI/RLAIF (数据来源：AI judge 替代人类标注，可叠加在任一算法上)
 ```
+
+→ SFT 本身的"流水内位置"是主线起点；显存紧张时切到 §11.2、想自动合成数据时去 §11.7，主线继续读 §11.3 / §11.4。
 
 工业上常见的变体：
 

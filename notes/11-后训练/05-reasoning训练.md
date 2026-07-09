@@ -1,6 +1,6 @@
 # 11.5 Reasoning 训练（RLVR / GRPO / DAPO / GSPO / 推理蒸馏）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.5](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.5](../../materials.md) · [⇡ 章节导论](./00-章节导论.md)
 
 > **训练侧:把"会推理"练到模型里。推理侧的姊妹章节 — 怎么在推理时花更多 token 逼近 RL 训出的能力 — 见 [§12.6 Test-Time Scaling](../12-推理优化/06-test-time-scaling.md)。两者构成 reasoning 时代的双轴 scaling。**
 
@@ -9,6 +9,18 @@
 ## 〇、本节回答什么
 
 > o1 / R1 这条 "reasoning model" 路线到底训了什么？为什么 verifiable reward 比 learned reward 更稳？GRPO 是怎么把 PPO 的 critic 干掉的、为什么 group baseline 是 unbiased 的？DAPO / GSPO 在 GRPO 上各改了什么、解决什么具体痛点？PRM 与 ORM 的取舍是什么？为什么大模型 RL 出来的 reasoning 能用 SFT 蒸到小模型？
+
+**本节在第 11 章的位置**（[§11.0 导论](./00-章节导论.md) 中的"PPO 两条简化路径之 on-policy 支"）：
+
+- **来自 §11.3 PPO**：GRPO **保留** PPO 的 on-policy + clipped surrogate + KL anchor，**砍掉**两件事：
+  - critic → 用 group baseline 替代（4 模型 → 3 模型）；
+  - learned RM → 用 verifiable verifier 替代（3 模型 → 2 模型）；
+- **与 §11.4 DPO 平行而非冲突**：DPO 是 offline 简化（适配 chat 偏好），GRPO 是 on-policy 简化 + 换 reward 来源（适配 reasoning）。工业上**两条支路串行使用**：先 DPO 做 chat，再 GRPO 做 reasoning；
+- **本节的革命性发现**：把 reward 从 learned RM 切到 program verifier（**RLVR 范式**），根治了 RLHF 的 reward hacking 死结——这是 R1 现象级表现的根因；
+- **下游**：§11.6 Agentic RL（GRPO 套在多轮 trajectory 上）；§10.5 知识蒸馏（R1-Distill：大模型 RL → 小模型 SFT）；
+- **正交话题**：reward 设计中通用 chat 部分仍需 LLM judge → §11.7 RLAIF；显存紧 → §11.2 PEFT（LoRA + GRPO 可行但少见）。
+
+读法建议：如果还没读过 §11.3 PPO，**强烈建议先读 PPO 再读本节**——GRPO 的所有设计都是对照 PPO 做的减法。
 
 2024 年 9 月 OpenAI o1 发布、2025 年 1 月 DeepSeek-R1 复现并开源——**Reasoning RL** 取代经典 RLHF 成为后训练新主线。核心范式：
 
@@ -661,25 +673,40 @@ entropy:          缓慢下降（policy 收敛），但保持 explore
 
 ## 十一、本节与其他节关系
 
+按 [§11.0 导论](./00-章节导论.md) 定位：GRPO 是 PPO 的 **on-policy 简化支 + reward 来源切换**，与 §11.4 DPO 平行。
+
 ```
-§11.1 SFT
-   ↓
-§11.3 PPO  ─┐
-§11.4 DPO  ─┴── 经典对齐（learned reward）
-   ↓
-§11.5 RLVR / GRPO (本节) ── reasoning 新主线（verifiable reward）
-   ↓
-§11.6 Agentic RL          ── 多轮工具调用 + 长 horizon
-   ↓
-§10.5 蒸馏 (R1-Distill)    ── 把大模型推理能力压到小模型
+                §11.1 SFT
+                   ↓
+                §11.3 PPO (母算法)
+                   │
+        ┌──────────┴──────────┐
+        │                     │
+   offline 简化             on-policy 简化 + reward 切换
+        ▼                     ▼
+   §11.4 DPO 家族         §11.5 RLVR / GRPO (本节)
+   {适配 chat}             {适配 reasoning}
+                          - learned RM → verifier (RLVR)
+                          - critic → group baseline
+                          - {GRPO, DAPO, GSPO}
+        │                     │
+        └──────┬──────────────┘
+               │ (工业上常串行)
+               ▼
+        §11.6 Agentic RL  (GRPO + 多轮工具)
+               │
+               ▼
+        §10.5 知识蒸馏    (R1-Distill: 大 RL → 小 SFT)
+               │
+               ▼
+        §12.6 Test-Time Scaling  (训练侧的姊妹：推理时再花 token)
+
+正交话题:
+  §11.7 RLAIF/CAI ── 通用 chat 部分仍需 LLM judge（RLVR 只覆盖有 verifier 的任务）
+  §11.2 PEFT      ── GRPO + LoRA 显存配方（少见但可行）
 ```
 
-GRPO 是 PPO 的减法（去 critic）+ DPO 的补法（保留 RL on-policy 优势）的混合。理解路径：
-
-- PPO 是母算法（§11.3）；
-- DPO 是 offline 简化（§11.4）；
-- GRPO 是 critic 简化 + verifiable reward（§11.5）；
-- DAPO / GSPO 是 GRPO 在长 CoT 上的稳定性补丁。
+**记忆口诀**：DPO 是"砍 RL 循环"；GRPO 是"砍 critic + 砍 learned reward"。两者都从 PPO 出发，做减法的方向不同。DAPO / GSPO 是 GRPO 在 long CoT 上的稳定性补丁（clip-higher、token-level loss、sequence-level ratio）。
 
 ---
 

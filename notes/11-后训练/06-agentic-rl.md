@@ -1,12 +1,26 @@
 # 11.6 Agentic RL（多轮工具调用 + 长程信用分配）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.6](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.6](../../materials.md) · [⇡ 章节导论](./00-章节导论.md)
 
 ---
 
 ## 〇、本节回答什么
 
 > 让 LLM 当 agent（用工具、写代码、调 API、修 PR、操作浏览器）需要怎么训？和单轮 reasoning RL 区别在哪？长 horizon、稀疏 reward 上 credit assignment 怎么做？2024-2025 的代表工作是什么？为什么 agentic RL 的瓶颈不在 LLM 而在环境基建？
+
+**本节在第 11 章的位置**（[§11.0 导论](./00-章节导论.md) 中的"算法主线终点"）：
+
+- **算法主线终点**：Agentic RL = §11.5 GRPO 算法 + **多轮 trajectory** + **环境/工具栈**；
+- **来自 §11.5**：算法层基本沿用 GRPO/DAPO/GSPO，几乎不动；
+- **新增三件事**（也是本节的全部新难点）：
+  1. 数据形态从单轮 CoT → 多轮 (think + tool + obs) 交错——loss mask 要 mask 掉 obs token；
+  2. Trajectory 从 < 10K → 数万 token——KV cache、显存、长 horizon credit assignment 全变成主要矛盾；
+  3. Rollout 从一次 forward → 等环境（编译、跑测试、浏览器）——**工程瓶颈从 LLM 转到 environment 集群**；
+- **上游能力依赖**：§8 长上下文（trajectory 装得下）、§11.5 GRPO（算法基础）、§11.1 SFT（行为克隆 cold-start 起点）；
+- **下游**：§13 评测的 agentic benchmark（SWE-Bench / WebArena / GAIA）、§12 推理 serving（生产环境的 agent 调度）；
+- **正交话题**：训练数据（专家 trajectory）仍可用 §11.7 RLAIF 风格自动合成；显存仍可用 §11.2 PEFT。
+
+→ 读法建议：**本节强烈依赖 §11.5**——如果 GRPO 还没掌握，请先回到 §11.5 再来本节。本节的算法层只是"GRPO + 多轮 trajectory 改造"，**主要篇幅在工程**。
 
 Agentic RL 是 **§11.5 reasoning RL 在多轮工具交互轨迹上的自然延伸**：
 
@@ -560,24 +574,32 @@ Cursor / Claude Code 偏交互式（用户 in-the-loop），训练数据是真�
 
 ## 九、本节与其他节关系
 
+按 [§11.0 导论](./00-章节导论.md) 定位：Agentic RL 是**算法主线的终点**，它把 §11.5 GRPO 套在多轮 trajectory + 真实环境上。
+
 ```
-§11.5 RLVR / GRPO ──→ §11.6 Agentic RL (本节)
-       │                    │
-       │ 单轮 reasoning     │ 多轮 + 工具
-       │ verifiable reward  │ 长 horizon
-       │                    ↓
-       │                §11.7 RLAIF (规模化 reward signal)
-       │
-§8 长上下文 ─→ trajectory 装得下
-§9 MoE     ─→ 大 agent 模型常用 MoE 节省推理
+   §11.1 SFT
+      ↓ (BC cold-start：先用专家 trajectory imitate)
+   §11.3 PPO ──┐
+   §11.4 DPO  ─┴── 不用（chat 对齐可选独立做）
+      ↓
+   §11.5 RLVR / GRPO
+   (算法层骨架，本节直接沿用)
+      ↓ + 多轮 trajectory + 环境/工具 + 长 horizon
+   §11.6 Agentic RL (本节, 算法主线终点)
+      ↓
+   §13 Agentic benchmark (SWE-Bench / WebArena / GAIA)
+   §12 推理 serving (生产环境 agent 调度)
+
+上游能力依赖（不是同级）:
+  §8 长上下文      ── trajectory 几万 token，long-context 训练能力是前提
+  §9 MoE          ── 大 agent 模型常用 MoE 省推理算力
+
+正交话题:
+  §11.7 RLAIF/CAI ── 专家 trajectory 可用 AI judge 自动评分
+  §11.2 PEFT      ── LoRA + agentic RL 显存配方
 ```
 
-Agentic RL 是 reasoning RL 在多轮工具交互上的扩展——算法层基本沿用 GRPO/DAPO/GSPO，主要差别在：
-
-- 数据形态（多轮交错）；
-- Loss mask（obs token 不算 loss）；
-- 工程栈（环境是 throughput 瓶颈）；
-- Credit assignment（长 horizon + dense reward）。
+**记忆口诀**：Agentic RL ≈ GRPO + 三件事——**obs mask + dense process reward + sandbox 集群**。算法层 95% 抄 §11.5，新难度 95% 在工程（环境基建是真正瓶颈：rollout 时间 95% 花在 tool execution，不在 LLM forward）。
 
 理解 §11.5 是理解本节的前提；而本节又是理解未来 "general-purpose agent training" 的基础。
 

@@ -88,19 +88,72 @@ $$M_{ij} = \begin{cases} 0 & j \le i \\ -\infty & j > i \end{cases}$$
 
 ## 六、计算复杂度细分
 
-设 $L$ = 序列长度，$d$ = $d_{model}$，单层 attention：
+设 $L$ = 序列长度，$d$ = $d_{model}$，$h$ = head 数，$d_k = d/h$。下表先给单层 MHA 的总账，再逐步拆。
 
-| 步骤 | FLOPs | 显存 |
-|------|-------|------|
-| Q,K,V 投影 | $3 \cdot L \cdot d^2$ | $3Ld$ |
-| $QK^\top$ | $L^2 d$ | $L^2$（attn matrix） |
-| Softmax | $L^2$ | $L^2$ |
-| Attn $\cdot V$ | $L^2 d$ | $Ld$ |
-| 输出投影 | $L d^2$ | $Ld$ |
-| **总计** | $4Ld^2 + 2L^2 d$ | $O(L^2 + Ld)$ |
+| 步骤 | 形状 | FLOPs | 激活显存 |
+|------|------|-------|----------|
+| Q,K,V 投影 | $(L,d)\cdot(d,d)\times 3$ | $6Ld^2$ | $3Ld$ |
+| $QK^\top$ | $(L,d_k)\cdot(d_k,L)\times h$ | $2L^2 d$ | $hL^2$（attn logits） |
+| Softmax | $(L,L)\times h$ | $\sim 5hL^2$（exp/和/除） | $hL^2$（attn 权重） |
+| Attn $\cdot V$ | $(L,L)\cdot(L,d_k)\times h$ | $2L^2 d$ | $Ld$ |
+| 输出投影 $W_O$ | $(L,d)\cdot(d,d)$ | $2Ld^2$ | $Ld$ |
+| **总计** | — | $\boxed{8Ld^2 + 4L^2 d}$ | $O(hL^2 + Ld)$ |
 
-**临界点**：$L \approx 2d$ 时 attention 和投影 FLOPs 持平；
-- $d=4096$ 时，$L=8192$ 起 attention 主导 → 长上下文场景必须做稀疏 / linear。
+> 因子 2：一次 $(m,k)\cdot(k,n)$ 矩阵乘法 = $2mnk$ FLOPs（每个输出元素一次乘 + 一次加）。前面表格里若按"乘加合一"算 1 FLOP，则去掉这个 2，得 $4Ld^2 + 2L^2 d$——两种写法在文献中都常见，差一个常数因子。
+
+### 6.1 逐项推导
+
+**① Q,K,V 投影**　$Q=XW_Q$，$X\in\mathbb{R}^{L\times d}$，$W_Q\in\mathbb{R}^{d\times d}$
+- 单次矩阵乘 FLOPs = $2Ld^2$，三个投影 → $6Ld^2$
+- 输出 $Q,K,V\in\mathbb{R}^{L\times d}$，激活显存 $3Ld$
+- **性质**：标准 GEMM，compute-bound，GPU 利用率高（>70% TFLOPs）
+
+**② 注意力打分 $S = QK^\top / \sqrt{d_k}$**
+- 每个 head：$(L,d_k)\cdot(d_k,L)$ → $2L^2 d_k$ FLOPs；$h$ 个 head 合起来 $2L^2 \cdot h d_k = 2L^2 d$
+- 显存上 $S\in\mathbb{R}^{h\times L\times L}$，是**长上下文显存爆炸**的根源（$L=8\text{k}, h=32$ 时单层就 8GB FP16）
+- **性质**：$L\ll d$ 时被投影 dominate；$L\gg d$ 时这一步主导
+
+**③ Softmax**
+- 每行需要 max（数值稳定）、exp、求和、除——约 $5$ 次操作/元素，总计 $\sim 5hL^2$
+- FLOPs 量级小（无 $d$），但 **memory-bound**：读写 $hL^2$ 的 logits/概率矩阵
+- 这就是 FlashAttention 要 fuse softmax 进 attention kernel 的根本动机（§5.1）
+
+**④ 加权求和 $O = \text{softmax}(S)\cdot V$**
+- 每个 head：$(L,L)\cdot(L,d_k)$ → $2L^2 d_k$；总计 $2L^2 d$（与 ② 同量级）
+- 输出 $L\times d$，激活显存 $Ld$
+- **性质**：与 ② 对称，同样在长 $L$ 时主导
+
+**⑤ 输出投影 $W_O\in\mathbb{R}^{d\times d}$**
+- FLOPs = $2Ld^2$，与单个投影同
+- 作用：把 $h$ 个 head 拼出的 $d$ 维向量"混合"——没有 $W_O$ 则各 head 输出仅是相加，head 间无交互
+
+### 6.2 临界点 & 直觉
+
+把投影项与 attention 项相比：
+$$\frac{\text{attn FLOPs}}{\text{proj FLOPs}} = \frac{4L^2 d}{8Ld^2} = \frac{L}{2d}$$
+
+- $L < 2d$：**投影主导**（典型短序列训练，~$O(Ld^2)$ 线性）
+- $L = 2d$：两者持平（$d=4096$ → $L=8192$）
+- $L > 2d$：**attention 主导**（~$O(L^2 d)$ 二次）
+
+实际场景：
+| 模型 | $d$ | 临界 $L$ | $L=32\text{k}$ 时 attention 占比 |
+|------|-----|---------|-------------------------------|
+| LLaMA-7B | 4096 | 8k | ~80% |
+| LLaMA-70B | 8192 | 16k | ~67% |
+| 32B+ 长文 | 8192 | 16k | 同上 |
+
+→ 这就是为什么 8k 以下做稠密 attention 没问题，32k+ 必须上 FlashAttention / sliding window / linear（§5–§7）。
+
+### 6.3 训练 vs 推理的成本差异
+
+| 阶段 | 主算子 | FLOPs 主项 | 受限于 |
+|------|--------|-----------|--------|
+| 训练（fwd+bwd）| 完整 GEMM | $\sim 3\times$ 上表 | compute |
+| Prefill | 完整 GEMM | 同训练 fwd | compute |
+| Decode（1 token）| $Q$ 是 $(1,d)$，$K/V$ 是 $(L_{\text{cache}},d)$ | $O(L_{\text{cache}}\cdot d)$ | **memory**（读 KV-cache） |
+
+decode 阶段 attention 的 FLOPs 极少，但要把整个 KV-cache 从 HBM 拉到 SRAM，算术强度极低——这就是 §4 roofline、§5.2 MQA/GQA/MLA 的全部动机。
 
 ---
 

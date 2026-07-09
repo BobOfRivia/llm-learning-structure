@@ -39,20 +39,116 @@ $$\mu = \frac{1}{d}\sum_{i=1}^{d} x_i, \quad \sigma^2 = \frac{1}{d}\sum_{i=1}^{d
 
 ## 三、RMSNorm（Zhang & Sennrich 2019）⭐ 现代主流
 
-省略**均值中心化**，只用 RMS 缩放：
+### 3.1 RMS 到底是什么
+
+**RMS = Root Mean Square**（均方根），是一个衡量向量"幅度"的统计量：
+
+$$\text{RMS}(x) = \sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2}$$
+
+**三个视角理解 RMS**：
+
+| 视角 | 公式 | 含义 |
+|------|------|------|
+| 几何 | $\lVert x \rVert_2 / \sqrt{d}$ | L2 范数按维度"摊薄"到每个分量 |
+| 统计 | $\sqrt{\mathbb{E}[x^2]}$ | 二阶矩的开方（信号"能量"的代表值）|
+| 极限 | $\mu = 0$ 时 $= \sigma$ | 零均值假设下等于标准差 |
+
+> 注意：**RMS ≠ L2 范数**。两者差一个 $\sqrt{d}$ 因子。RMS 是"逐分量平均强度"，与维度 $d$ 无关；L2 是"整体长度"，会随 $d$ 增长。这也是为什么 RMSNorm 在不同 hidden size 下行为稳定。
+
+### 3.2 RMSNorm 公式
 
 $$y = \gamma \odot \frac{x}{\text{RMS}(x)}, \quad \text{RMS}(x) = \sqrt{\frac{1}{d}\sum_{i=1}^{d} x_i^2 + \epsilon}$$
 
-- 没有 $\mu$，没有 $\beta$（一般也不要 affine 偏置）
-- 计算量比 LayerNorm 少 **~30-50%**
-- 实证：**效果几乎与 LN 持平**，但更快 / 更省
+- **没有** $\mu$（不中心化）
+- **没有** $\beta$（不加 affine 偏置）
+- **只保留**一个可学习缩放 $\gamma \in \mathbb{R}^d$，初始化为全 1
 
-**采用者**：Llama 系列 / Qwen / Mistral / DeepSeek / Gemma / 几乎所有 2023 后的开源模型。
+### 3.3 从 LayerNorm 推导：为什么可以省均值
 
-**为什么 RMS 够用？**
-- 均值漂移在残差网络里实证不显著
-- 缩放控制方差是主导因素
-- 减一步运算在 LLM 这种深网络中累积可观
+LayerNorm 做两步：
+1. **中心化**：$\tilde{x} = x - \mu$ → 让分布零均值
+2. **缩放**：$\hat{x} = \tilde{x} / \sigma$ → 让方差为 1
+
+关键观察：**当 $\mu = 0$ 时**
+
+$$\sigma^2 = \frac{1}{d}\sum_i (x_i - \mu)^2 = \frac{1}{d}\sum_i x_i^2 = \text{RMS}(x)^2$$
+
+即 RMS 等于标准差。所以 **RMSNorm 等价于"假定均值已为 0"的 LayerNorm**。
+
+**为什么这个假定在 LLM 里成立？**
+- **残差累加**：$x_{l+1} = x_l + \text{Sublayer}(x_l)$，每层叠加自然让分布混合，均值漂移自动被"摊平"
+- **$\gamma$ 可吸收偏移**：即使有微小的均值偏置，下游 $\gamma$ 和后续层的线性变换可以补偿
+- **实证 ablation**（Zhang & Sennrich 2019）：去掉中心化后 PPL / BLEU 在多种任务上几乎不变
+
+### 3.4 计算量对比（细到 reduce 次数）
+
+| 步骤 | LayerNorm | RMSNorm |
+|------|-----------|---------|
+| reduce 1 | $\mu = \text{mean}(x)$ | $r^2 = \text{mean}(x^2)$ |
+| 中心化 | $\tilde{x} = x - \mu$ | — |
+| reduce 2 | $\sigma^2 = \text{mean}(\tilde{x}^2)$ | — |
+| rsqrt | $1/\sqrt{\sigma^2 + \epsilon}$ | $1/\sqrt{r^2 + \epsilon}$ |
+| 缩放 | $\tilde{x} \cdot \text{rsqrt}$ | $x \cdot \text{rsqrt}$ |
+| affine | $\gamma \odot \cdot + \beta$ | $\gamma \odot \cdot$ |
+
+RMSNorm **少一次 reduce、一次广播减法、一次加偏置**。
+
+> GPU 实现层面：reduce 操作要走 warp shuffle / shared memory 同步，是 Norm kernel 的真正瓶颈。少一次 reduce ≈ Norm kernel 时间 **减半**。在百层级别的 LLM 里，这是肉眼可见的训练 / 推理加速。
+
+### 3.5 一个具体例子（手算）
+
+取 $x = [1, 2, 3, 4]$，$\epsilon = 0$，$\gamma = [1,1,1,1]$。
+
+**LayerNorm**：
+- $\mu = (1+2+3+4)/4 = 2.5$
+- $\tilde{x} = [-1.5, -0.5, 0.5, 1.5]$
+- $\sigma^2 = (2.25+0.25+0.25+2.25)/4 = 1.25$，$\sigma \approx 1.118$
+- $y_{\text{LN}} \approx [-1.342, -0.447, 0.447, 1.342]$（零均值，单位方差）
+
+**RMSNorm**：
+- $\text{RMS}^2 = (1+4+9+16)/4 = 7.5$，$\text{RMS} \approx 2.739$
+- $y_{\text{RMS}} \approx [0.365, 0.730, 1.095, 1.461]$（保留了正偏置方向）
+
+两者输出方向不同，但训练时 $\gamma$（和后续线性层）会吸收这个差异，最终收敛点几乎一致。
+
+### 3.6 ε 的位置：sqrt 内 vs 外
+
+两种常见实现，结果差一点点但都能跑：
+
+```python
+# A) Llama / 多数现代实现：ε 在 sqrt 内
+rms_inv = (x.pow(2).mean(-1, keepdim=True) + eps).rsqrt()
+
+# B) 原始 LayerNorm 风格：ε 在 sqrt 外
+rms_inv = 1.0 / (x.pow(2).mean(-1, keepdim=True).sqrt() + eps)
+```
+
+- **A 更安全**：输入接近零时不会除零，反向梯度也更稳
+- **B 在大数下精度略好**，但 BF16 下数值边界容易踩坑
+- 主流（Llama / Qwen / Mistral 源码）一律用 **A**
+
+### 3.7 反向传播为何更简单
+
+LayerNorm 反向需要回传三股梯度：
+1. 通过 $\gamma, \beta$
+2. 通过 $\sigma$ → 再回到 $\mu$ 和 $x$
+3. 通过 $\mu$ → 再回到 $x$
+
+RMSNorm 反向只有两股：
+1. 通过 $\gamma$
+2. 通过 $\text{RMS}$ → 直接回到 $x$
+
+**少一条均值的梯度链** → 反向 FLOPs 和激活显存都更少，关键路径短，对 fused kernel（如 FlashNorm）也更友好。
+
+### 3.8 谁在用 RMSNorm
+
+**采用者**：Llama 系列 / Qwen / Mistral / DeepSeek / Gemma / Yi / Phi / 几乎所有 2023 后的开源模型。
+
+**为什么能成为新主流**：
+- 训练快 + 推理快（每层 Norm 省 30-50% 时间）
+- 反向梯度链更短，更稳
+- 实证精度不输 LayerNorm
+- 实现极简（一行 `rsqrt + mul`），易于 fuse 到 attention / FFN kernel
 
 ---
 

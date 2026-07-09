@@ -1,12 +1,24 @@
 # 11.7 Constitutional AI / RLAIF（规模化 AI 反馈）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.7](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.7](../../materials.md) · [⇡ 章节导论](./00-章节导论.md)
 
 ---
 
 ## 〇、本节回答什么
 
 > Anthropic 的 Constitutional AI 是什么、为什么用 AI 当 annotator 能 work？RLAIF 与 RLHF 在 2024-2026 怎么混用？Self-Rewarding LM 是不是"模型自训"的合法路径，会不会陷入偏见放大？LLM-as-Judge 的 bias 有哪些、怎么缓解？OpenAI Deliberative Alignment 与 CAI 是同一思路吗？
+
+**本节在第 11 章的位置**（[§11.0 导论](./00-章节导论.md) 中的"正交话题 B：数据来源轴"）：
+
+- **正交话题 B**：CAI / RLAIF **不替换任何 RL 算法**——它解决的是"§11.3 PPO / §11.4 DPO / §11.5 GRPO 训练所需的偏好数据从哪来"；
+- **与算法主线的关系**：
+  - PPO + RLAIF → Google 2023 RLAIF 原论文路径；
+  - DPO + RLAIF → UltraFeedback / Magpie / Tülu-3 / Zephyr 路径（开源界主流）；
+  - GRPO + LLM judge → reasoning 任务中通用 chat 部分（verifier 覆盖不到）；
+  - SFT + CAI self-critique → Anthropic Claude 系的安全数据合成；
+- **与 §11.2 PEFT 的关系**：两者**互不替代也互不冲突**——PEFT 决定"用多少显存训"，CAI/RLAIF 决定"数据从哪来"，常常同时叠加（QLoRA + DPO + UltraFeedback 是开源界最常见的组合）；
+- **核心张力**：人类标偏好贵且慢、AI judge 便宜但有可识别的 bias（position / length / self-bias / jailbreak）——本节大量篇幅在讨论这些 bias 的机制与缓解；
+- **本节同时承担"全章小结"职能**：§九 给出 2026 标准 pipeline 总览，与 [§11.0 导论](./00-章节导论.md) 对应。读完本节回头看导论会觉得"原来如此"。
 
 人类标偏好数据**贵且慢**——10w 条 pair 标注成本数十万美元、迭代周期几个月。用 LLM 当 annotator 可以把数据规模放大 100×——这是 **RLAIF (RL from AI Feedback)** 的核心动机。
 
@@ -573,53 +585,77 @@ $$
 
 ---
 
-## 九、本节与第 11 章总结
+## 九、本节与其他节关系（与全章收尾）
+
+按 [§11.0 导论](./00-章节导论.md) 定位：CAI / RLAIF 是**正交话题 B（数据来源轴）**，与 §11.2 PEFT（正交话题 A：显存效率轴）并列，**可叠加在算法主线任一节点上**。
 
 ```
-§11.7 RLAIF / CAI (本节)
-   │
-   └─ 数据来源层面的革命：人类 → AI judge
-      └─ 与 §11.3 PPO / §11.4 DPO / §11.5 GRPO 正交组合
-         任何 RL 算法都可换上 RLAIF 数据源
+            算法主线 (§11.1 / 3 / 4 / 5 / 6)
+                       ↑
+              数据来源切换（本节关心）
+                       │
+        ┌──────────────┼──────────────┐
+        ▼              ▼              ▼
+   纯人类标注 RLHF   混合 (1:10)    Pure RLAIF / CAI
+   ($数十万/标注集)  α=0.1-0.3     (LLM judge / self-critique)
+                                        │
+                       ┌────────────────┼────────────────┐
+                       ▼                ▼                ▼
+                Pure RLAIF       Self-Rewarding LM    Constitutional AI
+                (Google 2023)    (Meta 2024)          (Anthropic 2022+)
+                                  ↑ 偏见放大风险
+                                  ↑ 限 3-5 轮
+
+与算法主线的典型组合:
+  PPO + RLAIF (§11.3)    Google 原 RLAIF 路径
+  DPO + RLAIF (§11.4)    UltraFeedback / Magpie / Tülu-3
+  GRPO + LLM judge (§11.5) reasoning 任务中通用 chat 部分
+  SFT + CAI self-critique (§11.1) Claude 安全数据合成
+
+与 §11.2 PEFT 的关系: 互不替代，可叠加
+  (QLoRA + DPO + UltraFeedback 是开源最常见配方)
 ```
 
-### 第 11 章小结：后训练全景
+### 全章 Recap（与 [§11.0 导论](./00-章节导论.md) 呼应）
+
+读完整章后，回头看 [§11.0 导论](./00-章节导论.md) 的全景图与"减法故事"——这时所有 7 节应该形成一个连贯的双轴结构：
 
 ```
-§11.1 SFT                    → 教格式、激发能力（不灌知识）
-§11.2 PEFT                   → LoRA / QLoRA / DoRA 等参数高效适配
-§11.3 RLHF (PPO)             → 经典 RL 对齐，上限高工程贵
-§11.4 DPO 家族                → offline 简化，2024 工业主流
-§11.5 RLVR / GRPO            → verifiable reward + reasoning RL
-§11.6 Agentic RL             → 多轮工具调用 + 长 horizon
-§11.7 Constitutional / RLAIF → 数据规模化，正交于算法层（本节）
+算法主线:    §11.1 SFT → §11.3 PPO → §11.4 DPO  +  §11.5 GRPO → §11.6 Agent
+                              母算法    offline 分支   on-policy + RLVR 分支    多轮工具
+                                        ╲              ╱
+                                         ╲(两条平行支)╱
+                                         (工业上串行用)
+
+正交话题 A:  §11.2 PEFT  — 显存效率（叠加在主线任一节点）
+正交话题 B:  §11.7 CAI/RLAIF（本节）— 数据来源（叠加在主线任一节点）
 ```
 
-**后训练的 2026 标准 pipeline**：
+**2026 工业标准 pipeline**（详细版在导论 §七）：
 
 ```
-SFT (§11.1)  [→ PEFT §11.2 视显存而定]
-   ↓
-DPO / Iterative DPO (§11.4)        ← RLAIF 提供数据 (§11.7)
-   ↓
-RLVR / GRPO (§11.5)                 ← Reasoning 强化
-   ↓
-[可选] Agentic RL (§11.6)           ← 多轮工具
-   ↓
-推理蒸馏（大模型 → 小模型，§10.5 + §11.5）
-   ↓
-Deployment
+base (§10) → SFT (§11.1) → DPO/Iterative DPO (§11.4) → GRPO/RLVR (§11.5)
+                              ↑                            ↑
+                           ← RLAIF 数据 (§11.7) →
+                              ↑                            ↑
+                              └── PEFT 视显存而定 (§11.2) ─┘
+                                                           ↓
+                                           [可选] Agentic RL (§11.6)
+                                                           ↓
+                                          推理蒸馏 (§10.5 + §11.5 §八)
+                                                           ↓
+                                              §12 推理优化 / §13 评测
 ```
 
-**几个值得记的趋势**：
+**值得记的 5 个趋势**（websearch 印证）：
 
-1. **DPO 取代 PPO 成为偏好对齐主流**（开源界）；
-2. **GRPO 取代 PPO 成为 reasoning RL 主流**（DeepSeek-R1 之后）；
-3. **RLAIF 取代纯 RLHF 成为数据来源主流**（成本与速度优势压倒一切）；
-4. **Reasoning model 取代纯 chat model 成为主流**（o1/R1 之后）；
-5. **Agent 训练正在成为下一个主战场**（2026+）。
+1. **DPO 取代 PPO** 成为偏好对齐主流（开源界）；
+2. **GRPO 取代 PPO** 成为 reasoning RL 主流（DeepSeek-R1 之后）；
+3. **RLAIF 取代纯 RLHF** 成为数据来源主流（成本与速度优势压倒一切）；
+4. **Reasoning model 取代纯 chat model** 成为主流（o1/R1 之后）；
+5. **Agent 训练**正在成为下一个主战场（2026+）。
 
-下一章 §12 推理优化（KV cache 优化、speculative decoding、量化、调度），把训完的模型部署到生产。
+下一章 §12 推理优化（KV cache、speculative decoding、量化、调度），把训完的模型部署到生产。
 
 ---
 

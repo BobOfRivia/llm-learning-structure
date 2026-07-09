@@ -1,12 +1,22 @@
 # 11.3 RLHF（RM + PPO）
 
-[← 返回框架](../../README.md) · [📎 materials.md → §11.3](../../materials.md)
+[← 返回框架](../../README.md) · [📎 materials.md → §11.3](../../materials.md) · [⇡ 章节导论](./00-章节导论.md)
 
 ---
 
 ## 〇、本节回答什么
 
 > RLHF 的三阶段流水到底在做什么？Reward Model 的损失为什么用 Bradley-Terry sigmoid？PPO 从 TRPO 演化到 clipped surrogate 经过了什么取舍？token-level reward 是怎么从 sequence-level 拆出来的？KL 控制、reward hacking 到底是什么机制？2024+ PPO 是否被 DPO/GRPO 取代了？
+
+**本节在第 11 章的位置**（先看 [§11.0 导论](./00-章节导论.md) 的"减法故事"）：
+
+- **算法主线"母算法"**：PPO 是后训练 RL 的根，**DPO（§11.4）和 GRPO（§11.5）都是 PPO 的减法变体**——理解 PPO 是理解后续所有 on-policy RL 的前提；
+- **上游**：§11.1 SFT（PPO 的 init 和 KL anchor 都来自 SFT 模型）；
+- **下游两条平行支路**：
+  - **§11.4 DPO**：去掉 RM + critic + RL 循环（offline 简化，适配 chat）；
+  - **§11.5 GRPO**：去掉 critic + 把 learned RM 换成 verifiable verifier（适配 reasoning）；
+- **正交话题**：显存不够 → §11.2 PEFT（LoRA + PPO 可省一半显存）；偏好数据贵 → §11.7 RLAIF（LLM judge 替代人类标注）；
+- **本节核心张力**：PPO 上限最高但工程最重（4 个模型），后两节都是为了"用更少的工程负担逼近 PPO 上限"。
 
 RLHF = **从人类偏好反向恢复奖励函数 → 用 RL 把策略优化到该奖励上，同时用 KL 锚定到 SFT 不让模型崩**。
 
@@ -560,19 +570,36 @@ PPO 工程太重 → 涌现一系列**轻量化变体**：
 
 ## 八、本节与其他节关系
 
+按 [§11.0 导论](./00-章节导论.md) 的"减法故事"定位：PPO 是**母算法**，DPO 和 GRPO 是它**两条相互正交的简化路径**。
+
 ```
-§11.1 SFT ──────────────→ §11.3 PPO (本节) ←── reward model
-                                ↓
-                          §11.4 DPO 家族（简化的 offline 方案）
-                                ↓
-                          §11.5 RLVR / GRPO（verifiable reward 替代 RM）
-                                ↓
-                          §11.6 Agentic RL（长程多轮）
-                                ↓
-                          §11.7 Constitutional / RLAIF（规模化 reward）
+                §11.1 SFT (起点)
+                       ↓
+                §11.3 PPO (本节, 母算法, 4 模型)
+                       │
+            ┌──────────┴──────────┐
+            │                     │
+   offline 简化 (去 RM/critic)   去 critic + verifiable reward
+   适配 chat                     适配 reasoning
+            │                     │
+            ▼                     ▼
+   §11.4 DPO 家族              §11.5 RLVR / GRPO
+   (2 模型: policy + ref)        (2-3 模型: policy + ref + verifier)
+            │                     │
+            └──────────┬──────────┘
+                       │
+              (工业上常串行使用：
+               先 DPO 做 chat 偏好，再 GRPO 做 reasoning)
+                       │
+                       ▼
+              §11.6 Agentic RL (多轮工具 + 长 horizon)
+
+正交话题（与本节可叠加）:
+  §11.2 PEFT     ── PPO + LoRA 省一半显存
+  §11.7 RLAIF    ── LLM judge 替代人类偏好标注（reward 数据来源轴）
 ```
 
-PPO 是后训练 RL 的母算法：DPO 是它的 offline 简化；GRPO 是它去掉 critic 的群体 baseline 版本；DAPO/GSPO 是 GRPO 的稳定性改进。理解 PPO 是理解后面所有变体的前提。
+**记忆口诀**：PPO = 4 模型（actor + critic + ref + RM）；DPO = 减 RM、减 critic、减 RL 循环 → 2 模型；GRPO = 减 critic（用 group baseline）、把 RM 换成 verifier → 2-3 模型。每一步减法去掉一个工程负担，但**核心数学骨架（policy gradient + 比较信号 + KL 锚定）从未变过**。
 
 ---
 

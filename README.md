@@ -7,6 +7,7 @@
 
 ## 补充知识（跨章节复用的工具笔记）
 
+- [熵与交叉熵（从"信息量"讲起）](notes/00-补充知识/05-熵与交叉熵.md) —— 所有分类 / LM / 蒸馏 loss 的地基，KL 的前置
 - [KL 散度作为损失函数](notes/00-补充知识/01-kl散度作为损失函数.md) —— DSA 蒸馏 / RLHF / DPO / VAE 都要用
 - [反向传播与链式法则](notes/00-补充知识/02-反向传播与链式法则.md) —— MoE 路由 / softmax 反传 / stop-gradient 都要用
 - [logits 与归一化函数](notes/00-补充知识/03-logits-与归一化函数.md) —— 分类 / LM head / attention / MoE router / 采样 都要用
@@ -124,7 +125,7 @@ Part VII  面试考点         §14
 - 10.5 **知识蒸馏**（属于训练，不是推理）
 
 ### §11  后训练（Alignment + Reasoning）
-> 这条线决定模型"对齐"和"会推理"。
+> 这条线决定模型"对齐"和"会推理"。**串读建议先看 [§11.0 章节导论](notes/11-后训练/00-章节导论.md)**（算法主线 + 两条正交话题的双轴结构）。
 
 - 11.1 **SFT**（Supervised Fine-Tuning）
 - 11.2 **PEFT 家族**：**LoRA → QLoRA → DoRA → AdaLoRA**（SFT/对齐的轻量化分支）
