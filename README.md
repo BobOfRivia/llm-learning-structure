@@ -12,6 +12,7 @@
 - [反向传播与链式法则](notes/00-补充知识/02-反向传播与链式法则.md) —— MoE 路由 / softmax 反传 / stop-gradient 都要用
 - [logits 与归一化函数](notes/00-补充知识/03-logits-与归一化函数.md) —— 分类 / LM head / attention / MoE router / 采样 都要用
 - [GPU 运算基础 (GEMM / Roofline / Tensor Core)](notes/00-补充知识/04-gpu运算基础-gemm-roofline.md) —— MFU / FlashAttention / batched GEMM / CUDA Graph / 量化 都要用
+- [采样与解码策略 (greedy / beam / temperature / top-k / top-p / min-p)](notes/00-补充知识/06-采样与解码策略.md) —— §11 rollout / §12.3 推测解码 / §12.6 self-consistency / §13 评测 都要用
 
 ---
 
@@ -97,6 +98,7 @@ Part VII  面试考点         §14
 - 8.1 训练侧：长上下文 curriculum、数据合成
 - 8.2 推理侧位置外推：**Position Interpolation → NTK-aware → YaRN → LongRoPE**
 - 8.3 推理侧 KV 节省：KV 量化、KV 驱逐（H2O、SnapKV）、chunked prefill
+- 8.4 [**Lost in the Middle 产生的原理**](notes/08-长上下文/04-lost-in-the-middle.md)：causal 掩码 + softmax 稀释 + RoPE 衰减 三根因（U 型召回）
 
 ---
 

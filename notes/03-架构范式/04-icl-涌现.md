@@ -142,7 +142,7 @@ CoT 推动了 **test-time compute** 这条新维度（§12.6）。
 
 ### 7.2 失败模式
 - **Reasoning 复杂任务**：few-shot CoT 必须，否则正确率骤降
-- **超长 context**："lost in the middle" 现象（[Liu et al. 2023](https://arxiv.org/abs/2307.03172)）
+- **超长 context**："lost in the middle" 现象（[Liu et al. 2023](https://arxiv.org/abs/2307.03172)；成因机制见 [§8.4](../08-长上下文/04-lost-in-the-middle.md)）
 - **prompt 注入**：context 中的恶意示例可能改变行为
 
 ### 7.3 Many-shot（2024 长上下文场景）

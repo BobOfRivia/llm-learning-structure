@@ -163,6 +163,8 @@ $$p_i = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}$$
 
 ### 5.3 Top-k / Top-p 采样
 
+> 采样/解码策略的完整展开（greedy / beam / min-p / typical / 惩罚项 / 任务选型）见 [§补充 6 采样与解码策略](./06-采样与解码策略.md)。
+
 排序、截断都在 logits 上做。softmax 是单调函数，**排 logits 的顺序 = 排 probs 的顺序**，但 logits 上不会下溢。
 
 ```python
